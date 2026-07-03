@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fantasy Town Viewer</title>
+    <!-- Leaflet Structural Stylesheet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style/style.css" />
+</head>
+<body>
+
+    <div id="map-viewport"></div>
+    <div id="sidebar">
+        <div id="empty-state">
+            <h3>Select a building to view details</h3>
+        </div>
+        
+        <div id="data-display" class="hidden">
+            <div id="back-button-container" class="hidden">
+                <button id="back-to-bldg-btn">← Back to Building</button>
+            </div>
+            <!-- Header Info -->
+            <div class="sidebar-header">
+                <h1 id="bldg-name">The Staring Griffin</h1>
+                <div id="bldg-type" class="sub-type">Large inn</div>
+                <div class="meta-row">
+                    <span class="icon">👥</span> <span id="bldg-count">8 people currently here</span>
+                </div>
+                <div class="meta-row">
+                    <span class="icon">🕒</span> <span id="bldg-hours">Open</span>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="tab-container">
+                <button class="tab-btn active" data-tab="currently-here">Currently Here</button>
+                <button class="tab-btn" data-tab="related">Related</button>
+                <button class="tab-btn" data-tab="notes">Notes</button>
+            </div>
+
+            <!-- Dynamic Content Zones -->
+            <div id="tab-content" class="content-panel">
+                <!-- JavaScript dynamically renders card grids or notes here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the Leaflet script engine globally -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="src/modules/leaflet-corridor.js"></script>
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

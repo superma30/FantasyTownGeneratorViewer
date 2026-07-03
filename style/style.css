@@ -1,0 +1,178 @@
+/* Sidebar Layout Override */
+#sidebar {
+    width: 400px;
+    height: 100vh;
+    background-color: #f7f5eb; /* Soft antique parchment tone */
+    color: #1a2332; /* Deep Navy text */
+    font-family: 'Cinzel', 'Georgia', serif;
+    border-left: 1px solid #d3cbb5;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Typography */
+.sidebar-header {
+    padding: 20px 20px 10px 20px;
+}
+.sidebar-header h1 {
+    font-size: 1.6rem;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #0b1a30;
+}
+.sub-type {
+    font-size: 1.1rem;
+    color: #555;
+    margin: 4px 0 10px 0;
+}
+.meta-row {
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+/* Navigation System matching image_8782fa.png */
+.tab-container {
+    display: flex;
+    border-bottom: 2px solid #d3cbb5;
+    background-color: #eee9dc;
+}
+.tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px 5px;
+    font-family: 'Cinzel', 'Georgia', serif;
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #1a2332;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+.tab-btn.active {
+    background-color: #f7f5eb;
+    border-bottom: 3px solid #b13434; /* Crimson accent line */
+    margin-bottom: -2px;
+}
+
+/* Character Grid Cards & Rooms */
+.content-panel {
+    padding: 15px 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+.room-section {
+    margin-bottom: 18px;
+}
+.room-title {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e3decb;
+    padding-bottom: 2px;
+}
+.person-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.person-card {
+    background-color: #f1ede0;
+    border: 1px solid #b8a98f;
+    border-radius: 3px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+.person-card:hover {
+    background-color: #e6dfcd;
+}
+.person-icon {
+    font-size: 1.2rem;
+}
+.person-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.person-name {
+    font-size: 0.85rem;
+    font-weight: bold;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.person-role {
+    font-size: 0.75rem;
+    color: #666;
+}
+.empty-text {
+    font-style: italic;
+    color: #888;
+    font-size: 0.85rem;
+}
+body { 
+    margin: 0; 
+    display: flex; 
+    flex-direction: row; /* Forces map and sidebar to sit side-by-side */
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#map-viewport { 
+    flex: 1; /* Tells the map canvas to consume all remaining horizontal window space */
+    height: 100vh; 
+    background-color: #e0d6bc; 
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Ensure the profile sheet fills the panel but doesn't overflow it blindly */
+.npc-profile-sheet {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Ensure the main structural container enforces its bounds */
+#data-display {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0; 
+    height: 100%;
+}
+
+/* Back Button Top Alignment Area */
+#back-button-container {
+    padding: 15px 20px 0 20px;
+}
+
+#back-to-bldg-btn {
+    background: #eee9dc;
+    border: 1px solid #b8a98f;
+    padding: 6px 12px;
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    border-radius: 3px;
+    transition: background 0.15s;
+    width: auto;
+}
+
+#back-to-bldg-btn:hover {
+    background: #e6dfcd;
+}
