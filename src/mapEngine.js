@@ -38,11 +38,11 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
 
     geoJSON.features.forEach(feature => {
         if (feature.properties.type === 'EDGE' && roadTypes.includes(feature.properties.edgeType)) {
-            addRoadToMap(map, feature)
+            addRoadToMap(map, feature);
         }
     });
 
-    L.geoJSON(geoJSON, {
+    const townFeaturesLayer = L.geoJSON(geoJSON, {
         coordsToLatLng: function (coords) {
             return new L.LatLng(coords[1], coords[0]);
         },
@@ -55,6 +55,8 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
         },
 
         style: function (feature) {
+            const scale = Math.pow(2, map.getZoom());
+
             switch (feature.properties.type) {
                 case 'BACKGROUND':
                     switch (feature.properties.backgroundType) {
@@ -84,22 +86,24 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
                 case 'EDGE':
                     switch (feature.properties.edgeType) {
                         case 'BORDER':
+                            return { color: '#493d2f', weight: 2.5 * scale, opacity: 1, interactive: false, pane: 'edge' };
                         case 'WATERFRONT':
+                            return { color: '#6e94bd', weight: 2.5 * scale, opacity: 0.85, interactive: false, pane: 'edge' };
                         case 'WOOD_PIER':
-                            return { color: '#7a6752', weight: 2.5, opacity: 0.85, interactive: false, pane: 'edge' };
+                            return { color: '#7a6752', weight: 2.5 * scale, opacity: 0.85, interactive: false, pane: 'edge' };
                         case 'DIRT_ROAD':
-                            return { color: '#7a6752', weight: 2, opacity: 0.85, interactive: false, pane: 'edge' };
+                            return { color: '#7a6752', weight: 2 * scale, opacity: 0.85, interactive: false, pane: 'edge' };
                         case 'MAIN_ROAD':
                         case 'ROAD':
-                            return { color: '#a29688', weight: 2.5, opacity: 0.85, interactive: false, pane: 'edge' };
+                            return { color: '#a29688', weight: 2.5 * scale, opacity: 0.85, interactive: false, pane: 'edge' };
                         case 'SMALL_ROAD':
-                            return { color: '#a29688', weight: 2, opacity: 0.85, interactive: false, pane: 'edge' };
+                            return { color: '#a29688', weight: 2 * scale, opacity: 0.85, interactive: false, pane: 'edge' };
                         case 'STONE_FENCE':
-                            return { color: '#6a6a6a', weight: 2, opacity: 0.85, interactive: false, pane: 'edge' };
+                            return { color: '#6a6a6a', weight: 1 * scale, opacity: 0.85, interactive: false, pane: 'edge' };
                         case 'STONE_PIER':
-                            return { color: '#848484', weight: 2.5, opacity: 0.85, interactive: false, pane: 'edge' };
+                            return { color: '#848484', weight: 2.5 * scale, opacity: 0.85, interactive: false, pane: 'edge' };
                         case 'TRAIL':
-                            return { color: '#7a6752', weight: 2.5, opacity: 0.85, interactive: false, pane: 'edge' };
+                            return { color: '#7a6752', weight: 2.5 * scale, opacity: 0.85, interactive: false, pane: 'edge' };
                         case 'INVISIBLE':
                         default:
                             return { stroke: false, interactive: false, pane: 'edge' };
@@ -107,9 +111,15 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
                 case 'WATER':
                     return { fillColor: '#517aa6', fillOpacity: 1, fill: true, stroke: false, interactive: false, pane: 'water' };
                 case 'BUILDING':
-                    return { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', weight: 0.5, stroke: true, interactive: true, pane: 'edge' };
+                    const type = feature.properties.buildingType;
+                    const config = buildingStyles[type] || buildingStyles['DEFAULT'];
+                    
+                    return {
+                        ...config.base,
+                        weight: config.base.baseWeight * scale
+                    };
                 default:
-                    return { color: '#333', weight: 1, interactive: false };
+                    return { color: '#333', weight: 1 * scale, interactive: false };
             }
         },
 
@@ -118,28 +128,48 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
                 buildingLayers[feature.properties.id] = layer;
 
                 layer.on('click', () => {
-                    highlightBuildingLayer(layer);
+                    highlightBuildingLayer(layer, map);
                     onBuildingClick(feature.properties.id);
                 });
 
                 layer.on('mouseover', function () {
                     if (currentSelectedLayer !== this) {
-                        this.setStyle({ fillColor: '#967354' });
+                        const type = feature.properties.buildingType;
+                        const config = buildingStyles[type] || buildingStyles['DEFAULT'];
+                        if (config.hover) this.setStyle(config.hover);
                     }
                 });
                 layer.on('mouseout', function () {
                     if (currentSelectedLayer !== this) {
-                        this.setStyle({ fillColor: '#b08f70' });
+                        const type = feature.properties.buildingType;
+                        const config = buildingStyles[type] || buildingStyles['DEFAULT'];
+                        this.setStyle(config.base);
                     }
                 });
             }
         }
     }).addTo(map);
 
+    
+    map.on('zoomend', () => {
+        townFeaturesLayer.setStyle(townFeaturesLayer.options.style);
+        
+        if (currentSelectedLayer) {
+            const prevType = currentSelectedLayer.feature.properties.buildingType;
+            const prevConfig = buildingStyles[prevType] || buildingStyles['DEFAULT'];
+            const scale = Math.pow(2, map.getZoom());
+            currentSelectedLayer.setStyle({ 
+                fillColor: prevConfig.selected.fillColor,
+                color: '#d32f2f', 
+                weight: 3 * scale 
+            });
+        }
+    });
+
     window.highlightBuildingById = function(id) {
         const targetLayer = buildingLayers[id];
         if (targetLayer) {
-            highlightBuildingLayer(targetLayer);
+            highlightBuildingLayer(targetLayer, map);
             if (typeof targetLayer.getBounds === 'function') {
                 map.panTo(targetLayer.getBounds().getCenter());
             }
@@ -155,12 +185,23 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
     }
 }
 
-function highlightBuildingLayer(layer) {
+function highlightBuildingLayer(layer, map) {
+    const scale = Math.pow(2, map.getZoom());
+    
     if (currentSelectedLayer) {
-        currentSelectedLayer.setStyle({ fillColor: '#b08f70', color: '#3a2b1d', weight: 0.5 });
+        const prevType = currentSelectedLayer.feature.properties.buildingType;
+        const prevConfig = buildingStyles[prevType] || buildingStyles['DEFAULT'];
+        
+        currentSelectedLayer.setStyle({ 
+            ...prevConfig.base, 
+            weight: prevConfig.base.baseWeight * scale 
+        });
     }
+    
     currentSelectedLayer = layer;
-    layer.setStyle({ fillColor: '#a27c5a', color: '#d32f2f', weight: 3 });
+    const prevType = currentSelectedLayer.feature.properties.buildingType;
+    const prevConfig = buildingStyles[prevType] || buildingStyles['DEFAULT'];
+    layer.setStyle({ fillColor: prevConfig.selected.fillColor, color: '#d32f2f', weight: 3 * scale });
 }
 
 const roadTypeOptions = {
@@ -247,3 +288,91 @@ function addRoadToMap(map, feature){
         L.corridor(latLngs, element).addTo(map);
     });
 }
+
+const buildingStyles = {
+    "DEFAULT": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "ARTISAN": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "CULTURAL": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "EDUCATIONAL": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "FACTION": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "FARM": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "GOVERNMENT": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "INDUSTRIAL": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "INN": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "LAW_ENFORCEMENT": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "RELIGIOUS": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "RESIDENCE": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "SERVICE": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "SHOP": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "TAVERN": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "WAREHOUSE": {
+        base:  { fillColor: '#b08f70', fillOpacity: 1, color: '#3a2b1d', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#a27c5a' },
+        hover: { fillColor: '#967354' }
+    },
+    "MARKET": {
+        base:  { fillColor: '#e3dad0', fillOpacity: 1, color: '#a29585', baseWeight: 0.5, stroke: true, interactive: true, pane: 'edge' },
+        selected: { fillColor: '#cbbfad' },
+        hover: { fillColor: '#c9beb3' }
+    },
+};

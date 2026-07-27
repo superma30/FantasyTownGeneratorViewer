@@ -50,6 +50,7 @@ function buildBuildingPayload(buildings, building, occupants){
     return {
             name: building.name,
             type: building.specificBuildingType ? building.specificBuildingType.toUpperCase() : "STRUCTURE",
+            description: building.description,
             notes: building.notes,
             isOpen: building.openingTimes ? true : false, // TODO integrate with clock (and eventually with opened and closed days)
             population: occupants,
@@ -70,13 +71,16 @@ function getPeopleRelatedToBuilding(data, buildingId){
             fullName: `${person.firstName} ${person.lastName}`,
             gender: person.gender || "Unknown",
             age: person.age || "Unknown",
-            heightCm: person.appearance?.heightCm || "Unknown",
+            appearance: person.appearance,
             race: person.race || "Unknown",
             job: person.jobTitle || "Resident",
+            religion: person.religion,
             stats: person.stats || null,
             coreValues: person.coreValues || null,
             placeOfWorkId: person.placeOfWork,
-            placeOfResidenceId: person.placeOfResidence
+            placeOfResidenceId: person.placeOfResidence,
+            childInFamilies: person.childInFamilies,
+            parentInFamilies: person.parentInFamilies
         }));
 }
 

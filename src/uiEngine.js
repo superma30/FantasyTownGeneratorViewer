@@ -128,7 +128,7 @@ function renderActiveTabContent() {
         contentPanel.innerHTML = `<div ${attributes}>${noteText}</div>`;
     }
 }
-// TODO change rooms definitions to a dict for each specific type of building because each building has different rooms, but not on related people, just on active ones, but while that isn't implement this isn't needed
+// TODO change rooms definitions to a dict for each specific type of building because each building has different rooms, but not on related people, just on active ones, but while that isn't implemented this isn't needed
 function renderPeopleGrid(container, people) {
     if (!people || people.length === 0) {
         container.innerHTML = '<div class="empty-text">No residential or professional connections documented.</div>';
@@ -226,12 +226,12 @@ function renderNPCProfileSheet(container) {
     const renderValues = (values) => {
         if (!values) return '<div class="empty-text">No personality profiling.</div>';
         return Object.entries(values).map(([trait, rating]) => {
-            const percentage = (rating / 5) * 100;
+            const percentage = (rating / 3) * 100;
             return `
                 <div style="margin-bottom: 6px; font-size: 0.8rem;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                         <span style="text-transform: capitalize; font-weight: bold;">${trait}</span>
-                        <span>${rating}/5</span>
+                        <span>${rating}/3</span>
                     </div>
                     <div style="background: #e6dfcd; height: 6px; border-radius: 3px; overflow: hidden;">
                         <div style="background: #b13434; height: 100%; width: ${percentage}%;"></div>
@@ -239,6 +239,51 @@ function renderNPCProfileSheet(container) {
                 </div>
             `;
         }).join('');
+    };
+    
+    // Helper function to turn templateValues into a readable description
+    const generateDescription = (npc) => {
+        if (!npc.appearance || !npc.appearance.templateValues || npc.appearance.templateValues.length < 9) {
+            return "No detailed physical description available.";
+        }
+
+        const t = npc.appearance.templateValues;
+        const v = valuesToText.templateValues;
+
+        // Determine correct pronouns
+        const pSubj = npc.gender === 'male' ? 'He' : (npc.gender === 'female' ? 'She' : 'They');
+        const pPoss = npc.gender === 'male' ? 'His' : (npc.gender === 'female' ? 'Her' : 'Their');
+
+        // Extract traits based on indices from your object
+        const hairLen = v[0][t[0]];
+        const hairTex = v[1][t[1]];
+        const hairCol = v[2][t[2]];
+        const elderly = t[3] !== 0 ? ` ${v[3][t[3]]}` : ''; // 0 is "none"
+        const eyeCol = v[4][t[4]];
+        const beard = v[5][t[5]];
+        const skinMod = v[6][t[6]];
+        const skinTone = v[7][t[7]];
+        const build = v[8][t[8]];
+
+        // Build the sentences
+        let text = `${pSubj} has ${skinMod} ${skinTone} skin and a ${build} build. `;
+
+        if (hairLen === 'bald') {
+            text += `${pSubj} is bald${elderly}. `;
+        } else {
+            text += `${pPoss} hair is ${hairLen}, ${hairTex}, and ${hairCol}${elderly}. `;
+        }
+
+        text += `${pPoss} eyes are ${eyeCol}`;
+
+        // Append facial hair primarily for males
+        if (npc.gender === 'male' && beard) {
+            text += `, and ${pSubj.toLowerCase()} ${beard}.`;
+        } else {
+            text += ".";
+        }
+
+        return text;
     };
 
     profileWrapper.innerHTML = `
@@ -255,8 +300,20 @@ function renderNPCProfileSheet(container) {
                 <div><strong>Height:</strong> ${selectedNPC.heightCm} cm</div>
             </div>
         </div>
+        
+        <!-- Foldable Physical Description -->
+        <div style="background: #f1ede0; border: 1px solid #b8a98f; padding: 15px; border-radius: 4px;">
+            <details>
+                <summary style="margin: 0; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; cursor: pointer; color: #0b1a30; outline: none; border-bottom: 1px solid #d3cbb5; padding-bottom: 4px;">
+                    Physical Appearance
+                </summary>
+                <div style="margin-top: 10px; font-size: 0.85rem; line-height: 1.5; color: #333;">
+                    ${generateDescription(selectedNPC)}
+                </div>
+            </details>
+        </div>
 
-        <!-- NEW: Related Infrastructure Section -->
+        <!-- Related Infrastructure Section -->
         <div style="background: #f1ede0; border: 1px solid #b8a98f; padding: 15px; border-radius: 4px;">
             <h4 style="margin: 0 0 10px 0; border-bottom: 1px solid #d3cbb5; padding-bottom: 4px; text-transform: uppercase; font-size: 0.9rem;">Affiliated Properties</h4>
             <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -329,4 +386,117 @@ function renderNPCProfileSheet(container) {
         setupTabListeners();
         renderActiveTabContent();
     });
+}
+
+const valuesToText = {
+    templateValues: [
+        [ // Hair Length
+            "bald",
+            "cropped",
+            "short",
+            "medium-length",
+            "long",
+            "very long",
+        ],
+        [ // Hair Texture
+            "braided",
+            "curly",
+            "frazzled",
+            "greasy",
+            "limp",
+            "messy",
+            "strange",
+            "straight",
+            "streaked",
+            "thick",
+            "thinning",
+            "wavy",
+            "well groomed",
+            "wiry",
+        ],
+        [ // Hair Colour
+            "black",
+            "gray",
+            "platinum",
+            "white",
+            "dark blonde",
+            "blonde",
+            "bleach blonde",
+            "dark red",
+            "orange",
+            "light red",
+            "brunette",
+            "auburn",
+        ],
+        [ // Elderly Hair
+            "none",
+            "that is beginning to turn grey",
+            "that is now almost fully grey",
+            "that is now almost fully white",
+            "that is beginning to thin",
+        ],
+        [ // Eye Colour
+            "amber",
+            "brown",
+            "hazel",
+            "green",
+            "blue",
+            "gray",
+            "light blue",
+            "light gray",
+            "blue-gray",
+            "green-gray",
+            "light brown",
+        ],
+        [ // Beard
+            "is clean shaven",
+            "has a short, cropped beard",
+            "has a long, bushy beard",
+            "has a thick, bushy beard",
+            "has a long, braided beard",
+            "has a rough, stubbly beard",
+            "has an unkept beard",
+            "has a thick, short beard",
+            "has a mustache",
+            "has a goatee",
+            "has a dusting of stubble",
+            "has a thin, wispy beard",
+            "has a few baby hairs on their chin",
+            "has a mutton crop beard",
+        ],
+        [ // Skin Tone Modifier
+            "dark",
+            "deep",
+            "rich",
+            "cool",
+            "warm",
+            "tanned",
+            "fair",
+            "light",
+            "pale",
+        ],
+        [ // Skin Tone
+            "black",
+            "brown",
+            "beige",
+            "white",
+            "pink",
+        ],
+        [ // Build Type
+            "athletic",
+            "round",
+            "large",
+            "skinny",
+            "medium",
+            "lean",
+            "muscular",
+            "fat",
+            "regular",
+            "thin",
+            "stocky",
+            "soft",
+            "wide",
+            "bony",
+        ],
+    ]
 }
