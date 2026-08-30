@@ -45,6 +45,28 @@
         </div>
     </div>
 
+    <!-- File Selection Modal Overlay -->
+    <div id="file-modal" class="file-modal-overlay">
+        <div class="file-modal-card">
+            <h2 class="file-modal-title">Load Fantasy Town</h2>
+            
+            <div class="file-input-group">
+                <label for="geojson-input" class="file-input-label">1. Map Data (.geojson)</label>
+                <input type="file" id="geojson-input" accept=".geojson,application/json" class="file-input">
+            </div>
+
+            <div class="file-input-group file-input-group-large">
+                <label for="json-input" class="file-input-label">2. Metadata (.json)</label>
+                <input type="file" id="json-input" accept=".json,application/json" class="file-input">
+            </div>
+
+            <button id="load-files-btn" class="file-modal-btn">
+                Load Map
+            </button>
+            <div id="modal-error" class="file-modal-error hidden"></div>
+        </div>
+    </div>
+
     <!-- Load the Leaflet script engine globally -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="src/modules/leaflet-corridor.js"></script>

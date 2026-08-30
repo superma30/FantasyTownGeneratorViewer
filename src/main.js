@@ -1,12 +1,62 @@
 import { initMap, renderTownLayers } from './mapEngine.js';
 import { updateSidebar } from './uiEngine.js';
 
+// Helper function to read uploaded files as JSON
+function readJsonFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                resolve(JSON.parse(e.target.result));
+            } catch (err) {
+                reject(new Error(`Failed to parse ${file.name}`));
+            }
+        };
+        reader.onerror = () => reject(new Error(`Error reading ${file.name}`));
+        reader.readAsText(file);
+    });
+}
+
+function setupFilePicker() {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('file-modal');
+        const loadBtn = document.getElementById('load-files-btn');
+        const geojsonInput = document.getElementById('geojson-input');
+        const jsonInput = document.getElementById('json-input');
+        const errorEl = document.getElementById('modal-error');
+
+        loadBtn.addEventListener('click', async () => {
+            errorEl.classList.add('hidden');
+
+            const geoFile = geojsonInput.files[0];
+            const jsonFile = jsonInput.files[0];
+
+            if (!geoFile || !jsonFile) {
+                errorEl.textContent = 'Please select both files before continuing.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const [geoJSON, rawMetadata] = await Promise.all([
+                    readJsonFile(geoFile),
+                    readJsonFile(jsonFile)
+                ]);
+
+                // Hide modal and pass parsed datasets back
+                modal.style.display = 'none';
+                resolve({ geoJSON, rawMetadata });
+            } catch (err) {
+                errorEl.textContent = err.message || 'Error parsing uploaded JSON files.';
+                errorEl.classList.remove('hidden');
+            }
+        });
+    });
+}
+
 async function bootstrapApp() {
-    // 1. Fetch your clean datasets
-    const [geoJSON, rawMetadata] = await Promise.all([
-        fetch('./public/data/Karimwani.geojson').then(res => res.json()),
-        fetch('./public/data/Karimwani.json').then(res => res.json())
-    ]);
+    // 1. Wait for user to select files and parse them
+    const { geoJSON, rawMetadata } = await setupFilePicker();
 
     // 2. Fire up the flat canvas layout engine
     const map = initMap();

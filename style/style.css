@@ -176,3 +176,71 @@ body {
 #back-to-bldg-btn:hover {
     background: #e6dfcd;
 }
+
+.file-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.file-modal-card {
+    background: #f1ede0;
+    border: 2px solid #b8a98f;
+    padding: 25px;
+    border-radius: 8px;
+    width: 360px;
+    font-family: sans-serif;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.file-modal-title {
+    margin-top: 0;
+    color: #0b1a30;
+    text-align: center;
+}
+
+.file-input-group {
+    margin-bottom: 15px;
+}
+
+.file-input-group-large {
+    margin-bottom: 20px;
+}
+
+.file-input-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 0.85rem;
+}
+
+.file-input {
+    width: 100%;
+}
+
+.file-modal-btn {
+    width: 100%;
+    padding: 10px;
+    background: #b13434;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.file-modal-btn:hover {
+    background: #962a2a;
+}
+
+.file-modal-error {
+    color: #b13434;
+    font-size: 0.8rem;
+    margin-top: 10px;
+    text-align: center;
+}
