@@ -249,3 +249,145 @@ body {
     margin-top: 10px;
     text-align: center;
 }
+
+/* Inline Search & Filter Bar Container */
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 20px 10px 20px;
+    box-sizing: border-box;
+}
+
+/* Styled Search Input */
+#building-search-input {
+    flex: 1;
+    background-color: #f1ede0;
+    border: 1px solid #b8a98f;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-family: 'Cinzel', 'Georgia', serif;
+    font-size: 0.85rem;
+    color: #1a2332;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+#building-search-input:focus {
+    border-color: #b13434;
+    background-color: #ffffff;
+    box-shadow: 0 0 4px rgba(177, 52, 52, 0.2);
+}
+
+#building-search-input::placeholder {
+    color: #888;
+    font-style: italic;
+}
+
+/* Filter Dropdown Position Wrapper */
+.filter-dropdown {
+    position: relative;
+}
+
+/* Filter Trigger Button */
+#filter-btn {
+    background-color: #eee9dc;
+    border: 1px solid #b8a98f;
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-family: 'Cinzel', 'Georgia', serif;
+    font-weight: bold;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #1a2332;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+#filter-btn:hover {
+    background-color: #e6dfcd;
+    border-color: #9c8c72;
+}
+
+/* Absolute Floating Popup Menu */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 100;
+    background-color: #f7f5eb;
+    border: 1px solid #b8a98f;
+    border-radius: 4px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 130px;
+}
+
+/* Checkbox Labels */
+.dropdown-menu label {
+    font-family: 'Cinzel', 'Georgia', serif;
+    font-size: 0.85rem;
+    color: #1a2332;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Checkbox Styling Accent */
+.dropdown-menu input[type="checkbox"] {
+    accent-color: #b13434;
+    cursor: pointer;
+}
+
+/* Input Wrapper */
+.search-input-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+/* Increase right padding on the input so text clears the larger touch target */
+#building-search-input {
+    width: 100%;
+    padding-right: 36px; /* Expanded space for the click area */
+}
+
+/* Expanded Hitbox Clear Button */
+.clear-btn {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    
+    /* Enlarge the clickable area (hitbox) */
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    
+    /* Center the visible text inside the larger button box */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+/* Optional hover state background to show the exact hitbox area when hovered */
+.clear-btn:hover {
+    color: #b13434;
+    background-color: rgba(0, 0, 0, 0.05);
+}

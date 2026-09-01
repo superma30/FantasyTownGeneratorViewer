@@ -1,5 +1,8 @@
 // Keep track of the currently highlighted building layer globally within the engine
 let currentSelectedLayer = null;
+let activeBuildingLayers = {};
+let activeMap = null;
+let currentSearchMatches = new Set();
 
 export function initMap() {
     const map = L.map('map-viewport', {
@@ -15,7 +18,7 @@ export function initMap() {
 
     const waterPane = map.createPane('water');
     waterPane.style.zIndex = 250;
-    waterPane.style.pointerEvents = 'none';
+    waterPane.style.pointerEvents = 'none'; 
     
     const roadCasingPane = map.createPane('roadCasing');
     roadCasingPane.style.zIndex = 280;
@@ -33,7 +36,9 @@ export function initMap() {
 }
 
 export function renderTownLayers(map, geoJSON, onBuildingClick) {
-    const buildingLayers = {};
+    activeMap = map;
+    activeBuildingLayers = {};
+    currentSearchMatches.clear();
     const roadTypes = ['MAIN_ROAD', 'ROAD', 'SMALL_ROAD', 'DIRT_ROAD', 'TRAIL'];
 
     geoJSON.features.forEach(feature => {
@@ -125,7 +130,8 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
 
         onEachFeature: function (feature, layer) {
             if (feature.properties.type === 'BUILDING') {
-                buildingLayers[feature.properties.id] = layer;
+                const bldgId = String(feature.properties.id);
+                activeBuildingLayers[bldgId] = layer;
 
                 layer.on('click', () => {
                     highlightBuildingLayer(layer, map);
@@ -133,14 +139,14 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
                 });
 
                 layer.on('mouseover', function () {
-                    if (currentSelectedLayer !== this) {
+                    if (currentSelectedLayer !== this && !currentSearchMatches.has(bldgId)) {
                         const type = feature.properties.buildingType;
                         const config = buildingStyles[type] || buildingStyles['DEFAULT'];
                         if (config.hover) this.setStyle(config.hover);
                     }
                 });
                 layer.on('mouseout', function () {
-                    if (currentSelectedLayer !== this) {
+                    if (currentSelectedLayer !== this && !currentSearchMatches.has(bldgId)) {
                         const type = feature.properties.buildingType;
                         const config = buildingStyles[type] || buildingStyles['DEFAULT'];
                         this.setStyle(config.base);
@@ -150,14 +156,20 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
         }
     }).addTo(map);
 
-    
     map.on('zoomend', () => {
         townFeaturesLayer.setStyle(townFeaturesLayer.options.style);
+        const scale = Math.pow(2, map.getZoom());
+
+        currentSearchMatches.forEach((id) => {
+            const layer = activeBuildingLayers[String(id)];
+            if (layer) {
+                layer.setStyle({ fillColor: '#ff5252', color: '#d32f2f', weight: 3 * scale });
+            }
+        });
         
         if (currentSelectedLayer) {
             const prevType = currentSelectedLayer.feature.properties.buildingType;
             const prevConfig = buildingStyles[prevType] || buildingStyles['DEFAULT'];
-            const scale = Math.pow(2, map.getZoom());
             currentSelectedLayer.setStyle({ 
                 fillColor: prevConfig.selected.fillColor,
                 color: '#d32f2f', 
@@ -167,7 +179,7 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
     });
 
     window.highlightBuildingById = function(id) {
-        const targetLayer = buildingLayers[id];
+        const targetLayer = activeBuildingLayers[String(id)];
         if (targetLayer) {
             highlightBuildingLayer(targetLayer, map);
             if (typeof targetLayer.getBounds === 'function') {
@@ -183,6 +195,57 @@ export function renderTownLayers(map, geoJSON, onBuildingClick) {
     if (townBounds.isValid()) {
         map.fitBounds(townBounds, { padding: [30, 30] });
     }
+}
+
+export function highlightBuildingsByQuery(query, rawBuildings = [], fields = ['name']) {
+    if (!activeMap) return;
+
+    const searchTerm = query.trim().toLowerCase();
+    const scale = Math.pow(2, activeMap.getZoom());
+
+    currentSearchMatches.clear();
+
+    if (searchTerm !== '' && fields.length > 0) {
+        rawBuildings.forEach((bldg) => {
+            const isMatch = fields.some(field => {
+                let fieldValue = '';
+                if (field === 'name') fieldValue = bldg.name;
+                if (field === 'type') fieldValue = bldg.specificBuildingType || bldg.buildingType || bldg.type;
+                if (field === 'description') fieldValue = bldg.description;
+
+                return fieldValue && String(fieldValue).toLowerCase().includes(searchTerm);
+            });
+
+            if (isMatch) {
+                currentSearchMatches.add(String(bldg.id));
+            }
+        });
+    }
+
+    // Apply styles according to match state
+    Object.keys(activeBuildingLayers).forEach((bldgId) => {
+        const layer = activeBuildingLayers[String(bldgId)];
+        const isMatched = currentSearchMatches.has(String(bldgId));
+        const isSelected = currentSelectedLayer === layer;
+
+        if (isSelected) return; // Retain active selection styling
+
+        const type = layer.feature.properties.buildingType;
+        const config = buildingStyles[type] || buildingStyles['DEFAULT'];
+
+        if (isMatched) {
+            layer.setStyle({
+                fillColor: '#ff5252',
+                color: '#d32f2f',
+                weight: 3 * scale
+            });
+        } else {
+            layer.setStyle({
+                ...config.base,
+                weight: config.base.baseWeight * scale
+            });
+        }
+    });
 }
 
 function highlightBuildingLayer(layer, map) {
@@ -206,80 +269,24 @@ function highlightBuildingLayer(layer, map) {
 
 const roadTypeOptions = {
     "MAIN_ROAD": [
-        {
-            corridor: 2 + 0.5, 
-            color: '#7a6752',
-            opacity: 1,
-            stroke: true,
-            interactive: false,
-            pane: 'roadCasing'
-        },
-        {
-            corridor: 2,     
-            color: '#e3dad0',
-            opacity: 1,
-            stroke: true,
-            interactive: false,
-            pane: 'roadFill'
-        }
+        { corridor: 2 + 0.5, color: '#7a6752', opacity: 1, stroke: true, interactive: false, pane: 'roadCasing' },
+        { corridor: 2, color: '#e3dad0', opacity: 1, stroke: true, interactive: false, pane: 'roadFill' }
     ],
     "ROAD": [
-        {
-            corridor: 1 + 0.5, 
-            color: '#7a6752',
-            opacity: 1,
-            stroke: true,
-            interactive: false,
-            pane: 'roadCasing'
-        },
-        {
-            corridor: 1,     
-            color: '#e3dad0',
-            opacity: 1,
-            stroke: true,
-            interactive: false,
-            pane: 'roadFill'
-        }
+        { corridor: 1 + 0.5, color: '#7a6752', opacity: 1, stroke: true, interactive: false, pane: 'roadCasing' },
+        { corridor: 1, color: '#e3dad0', opacity: 1, stroke: true, interactive: false, pane: 'roadFill' }
     ],
     "SMALL_ROAD": [
-        {
-            corridor: 0.5 + 0.5, 
-            color: '#7a6752',
-            opacity: 1,
-            stroke: true,
-            interactive: false,
-            pane: 'roadCasing'
-        },
-        {
-            corridor: 0.5,     
-            color: '#e3dad0',
-            opacity: 1,
-            stroke: true,
-            interactive: false,
-            pane: 'roadFill'
-        }
+        { corridor: 0.5 + 0.5, color: '#7a6752', opacity: 1, stroke: true, interactive: false, pane: 'roadCasing' },
+        { corridor: 0.5, color: '#e3dad0', opacity: 1, stroke: true, interactive: false, pane: 'roadFill' }
     ],
     "DIRT_ROAD": [
-        {
-            corridor: 0.5, 
-            color: '#665335',
-            opacity: 1,
-            stroke: true,
-            interactive: false,
-            pane: 'roadFill'
-        }
+        { corridor: 0.5, color: '#665335', opacity: 1, stroke: true, interactive: false, pane: 'roadFill' }
     ],
     "TRAIL": [
-        {
-            corridor: 0.5, 
-            color: '#777776',
-            opacity: 0.4,
-            stroke: true,
-            interactive: false,
-            pane: 'roadFill'
-        }
+        { corridor: 0.5, color: '#777776', opacity: 0.4, stroke: true, interactive: false, pane: 'roadFill' }
     ],
-}
+};
 
 function addRoadToMap(map, feature){
     const latLngs = feature.geometry.coordinates.map(coord => new L.LatLng(coord[1], coord[0]));

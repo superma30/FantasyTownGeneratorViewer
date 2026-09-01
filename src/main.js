@@ -1,4 +1,4 @@
-import { initMap, renderTownLayers } from './mapEngine.js';
+import { initMap, renderTownLayers, highlightBuildingsByQuery } from './mapEngine.js';
 import { updateSidebar } from './uiEngine.js';
 
 // Helper function to read uploaded files as JSON
@@ -58,11 +58,76 @@ async function bootstrapApp() {
     // 1. Wait for user to select files and parse them
     const { geoJSON, rawMetadata } = await setupFilePicker();
 
-    // 2. Fire up the flat canvas layout engine
+    const searchInput = document.getElementById('building-search-input');
+    const clearBtn = document.getElementById('clear-search-btn');
+    const filterBtn = document.getElementById('filter-btn');
+    const filterMenu = document.getElementById('filter-menu');
+
+    // Helper to get checked values from the checkbox dropdown menu
+    const getSelectedFields = () => {
+        if (!filterMenu) return ['name']; // Fallback default
+        const checkedInputs = filterMenu.querySelectorAll('input[type="checkbox"]:checked');
+        return Array.from(checkedInputs).map(cb => cb.value);
+    };
+
+    // Helper to sync search query and selected fields with map highlights
+    const applyCurrentSearch = () => {
+        const query = searchInput ? searchInput.value : '';
+        const fields = getSelectedFields();
+        
+        highlightBuildingsByQuery(query, rawMetadata.buildings || [], fields);
+    };
+    
+    // 2. Setup event listeners for search input and multi-select dropdown
+    const handleSearchInput = () => {
+        if (clearBtn) {
+            clearBtn.classList.toggle('hidden', !searchInput.value);
+        }
+        applyCurrentSearch();
+    };
+    if (searchInput) {
+        searchInput.addEventListener('input', handleSearchInput);
+    }
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                handleSearchInput();
+                searchInput.focus();
+            }
+        });
+    }
+    if (filterBtn && filterMenu) {
+        // Toggle menu on button click
+        filterBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            filterMenu.classList.toggle('hidden');
+        });
+
+        // Keep menu open when clicking inside it
+        filterMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Close dropdown when clicking anywhere else on the page
+        document.addEventListener('click', () => {
+            filterMenu.classList.add('hidden');
+        });
+
+        // Trigger search re-calculation whenever a checkbox state changes
+        const checkboxes = filterMenu.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', applyCurrentSearch);
+        });
+    }
+
+    // 3. Fire up the flat canvas layout engine
     const map = initMap();
 
-    // 3. Render features and listen for user clicks
+    // 4. Render features and listen for user clicks
     renderTownLayers(map, geoJSON, (buildingId) => {
+        applyCurrentSearch();
+
         const building = buildingById(rawMetadata, buildingId);
 
         if (!building) {
