@@ -27,6 +27,11 @@
     color: #555;
     margin: 4px 0 10px 0;
 }
+.building-description{
+    font-size: 0.9rem;
+    color: #333;
+    margin: 4px 0 10px 0;
+}
 .meta-row {
     font-size: 0.95rem;
     display: flex;

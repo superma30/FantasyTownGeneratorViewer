@@ -39,11 +39,14 @@ function renderHeaderInfo() {
     const typeEl = document.getElementById('bldg-type');
     const countEl = document.getElementById('bldg-count');
     const hoursEl = document.getElementById('bldg-hours');
+    const descEl = document.getElementById('bldg-description');
     const backBtnContainer = document.getElementById('back-button-container');
 
     if (selectedNPC) {
         // Show the top escape hatch button frame
         backBtnContainer.classList.remove('hidden');
+        
+        if (descEl) descEl.classList.add('hidden');
 
         // Wire up the button callback routine
         const backBtn = document.getElementById('back-to-bldg-btn');
@@ -69,6 +72,14 @@ function renderHeaderInfo() {
         typeEl.textContent = currentBuildingData.type || "Structure";
         countEl.textContent = `${currentBuildingData.population.length} people live/work here`;
         hoursEl.textContent = currentBuildingData.isOpen ? "Open" : "Closed / Private"; // TODO change if maybe the building is private it's written "private" so pass extra data bc if no opening hours data exists that means the building is private
+        if (descEl) {
+            if (currentBuildingData.description) {
+                descEl.textContent = currentBuildingData.description;
+                descEl.classList.remove('hidden');
+            } else {
+                descEl.classList.add('hidden');
+            }
+        }
     }
 }
 

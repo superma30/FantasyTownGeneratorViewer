@@ -100,7 +100,7 @@ function buildBuildingPayload(buildings, building, occupants){
     return {
             name: building.name,
             type: building.specificBuildingType ? building.specificBuildingType.toUpperCase() : "STRUCTURE",
-            description: building.description,
+            description: building.description || null,
             notes: building.notes,
             isOpen: building.openingTimes ? true : false, // TODO integrate with clock (and eventually with opened and closed days)
             population: occupants,
